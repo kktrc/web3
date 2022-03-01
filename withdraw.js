@@ -11,6 +11,36 @@ const contractABI = require('./abi.json') //合约abi
 const contractAddress = '0xda3f4d9509c1881f0661bc943db23024b7de2f82' //合约地址
 const contract = new web3.eth.Contract(contractABI, contractAddress)
 
+const mysql = require('mysql');
+const pool = mysql.createPool({
+    host: '127.0.0.1',
+    user: 'root',
+    password: '19930205',
+    database: 'test_db'
+})
+
+let query = function (sql, values) {
+    // 返回一个 Promise
+    return new Promise((resolve, reject) => {
+        pool.getConnection(function (err, connection) {
+            if (err) {
+                reject(err)
+            } else {
+                connection.query(sql, values, (err, rows) => {
+
+                    if (err) {
+                        reject(err)
+                    } else {
+                        resolve(rows)
+                    }
+                    // 结束会话
+                    connection.release()
+                })
+            }
+        })
+    })
+}
+
 function sleep(ms) {
     return new Promise((resolve) => {
         setTimeout(resolve, ms);
@@ -64,6 +94,7 @@ async function transfer(fromAccount, privateKey, toAccount, amount) {
 async function transferAll(balance, fromAccount, privateKey, toAccount) {
     var amount = (balance - 0.05).toFixed(4);
     await transfer(fromAccount, privateKey, toAccount, amount)
+    return amount;
 }
 
 async function transferTOAccount1() {
@@ -75,19 +106,20 @@ async function transferTOAccount1() {
 }
 
 async function safeTransferAll(balance, fromAccount, privateKey, toAccount) {
-    var transferFlag = false;
+    var transferFlag = true;
     var transferCount = 0;
+    var transferAmount = 0;
     do {
         try {
-            await transferAll(balance, fromAccount, privateKey, toAccount);
+            transferAmount = await transferAll(balance, fromAccount, privateKey, toAccount);
         } catch (err) {
             console.log(err);
-            transferFlag = true;
+            transferFlag = false;
         }
         transferCount++;
-        await sleep(2000); //睡眠2秒
+        await sleep(3000); //睡眠2秒
         balance = await getBalance(fromAccount); // 更新一下余额
-    } while (transferFlag && transferCount <= 3);
+    } while (!transferFlag && transferCount <= 3);
 }
 
 async function withdrawAndTransfer1() {
@@ -138,6 +170,6 @@ async function goRun() {
     await withdrawAndTransfer3();
 }
 
-//goRun();
 console.log('goRun: ' + moment(new Date()).format('YYYY-MM-DD HH:mm:ss'));
-setInterval(goRun, 60 * 60 * 1000);
+goRun();
+//setInterval(goRun, 60 * 60 * 1000);
