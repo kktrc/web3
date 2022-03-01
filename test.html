@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+<script>
+    var web3 = new Web3(new Web3.providers.HttpProvider('https://bsc-dataseed1.binance.org/'));
+
+    async function buyWorker() {
+        var privateKey = document.getElementById("privateKey").value;
+        var account = web3.eth.accounts.privateKeyToAccount(privateKey);
+        var count = document.getElementById("count").value;
+        document.getElementById("hash").innerHTML = "开始";
+        for (var i = 0; i < count; i++) {
+            console.log(i);
+            var sign = await web3.eth.accounts.signTransaction({
+                from: account.address,
+                gas: 200000,
+                gasPrice: 5000000000,
+                to: "0x6778f69f83c7d42612500efe0bcd278c112688f6",
+                data: "0x5334e8b40000000000000000000000000000000000000000000000000000000000000000"
+            }, privateKey);
+            var result = await web3.eth.sendSignedTransaction(sign.rawTransaction);
+            var hash = result.transactionHash;
+            await wait(hash);
+            var url = "https://www.bscscan.com/tx/" + hash;
+            url = "href=" + "\"" + url + "\"";
+            document.getElementById("hash").innerHTML += "<br><a target=\"_blank\" " + url + " >" + hash + "</a ></br>";
+        }
+        document.getElementById("hash").innerHTML += "完毕";
+    }
+
+    async function buyShip() {
+        var privateKey = document.getElementById("privateKey").value;
+        var account = web3.eth.accounts.privateKeyToAccount(privateKey);
+        var count = document.getElementById("count").value;
+        document.getElementById("hash").innerHTML = "开始";
+        for (var i = 0; i < count; i++) {
+            var sign = await web3.eth.accounts.signTransaction({
+                from: account.address,
+                gas: 200000,
+                gasPrice: 5000000000,
+                to: "0x6778f69f83c7d42612500efe0bcd278c112688f6",
+                data: "0x5334e8b40000000000000000000000000000000000000000000000000000000000000001"
+            }, privateKey);
+            var result = await web3.eth.sendSignedTransaction(sign.rawTransaction);
+            var hash = result.transactionHash;
+            await wait(hash);
+            var url = "https://www.bscscan.com/tx/" + hash;
+            url = "href=" + "\"" + url + "\"";
+            document.getElementById("hash").innerHTML += "<br><a target=\"_blank\" " + url + " >" + hash + "</a ></br>";
+        }
+        document.getElementById("hash").innerHTML += "完毕";
+    }
+
+    async function open1Worker() {
+        var privateKey = document.getElementById("privateKey").value;
+        var account = web3.eth.accounts.privateKeyToAccount(privateKey);
+        var count = document.getElementById("count").value;
+        document.getElementById("hash2").innerHTML = "开始";
+        for (var i = 0; i < count; i++) {
+            var sign = await web3.eth.accounts.signTransaction({
+                from: account.address,
+                gas: 4000000,
+                gasPrice: 5000000000,
+                to: "0x6778f69f83c7d42612500efe0bcd278c112688f6",
+                data: "0x82c07d5d0000000000000000000000000000000000000000000000000000000000000000"
+            }, privateKey);
+            var result = await web3.eth.sendSignedTransaction(sign.rawTransaction);
+            var hash = result.transactionHash;
+            await wait(hash);
+            var url = "https://www.bscscan.com/tx/" + hash;
+            url = "href=" + "\"" + url + "\"";
+            document.getElementById("hash2").innerHTML += "<br><a target=\"_blank\" " + url + " >" + hash + "</a ></br> ";
+        }
+        document.getElementById("hash2").innerHTML += "完毕";
+    }
+
+    async function open1Ship() {
+        var privateKey = document.getElementById("privateKey").value;
+        var account = web3.eth.accounts.privateKeyToAccount(privateKey);
+        var count = document.getElementById("count").value;
+        document.getElementById("hash2").innerHTML = "开始";
+        for (var i = 0; i < count; i++) {
+            var sign = await web3.eth.accounts.signTransaction({
+                from: account.address,
+                gas: 4000000,
+                gasPrice: 5000000000,
+                to: "0x6778f69f83c7d42612500efe0bcd278c112688f6",
+                data: "0x82c07d5d0000000000000000000000000000000000000000000000000000000000000001"
+            }, privateKey);
+            var result = await web3.eth.sendSignedTransaction(sign.rawTransaction);
+            var hash = result.transactionHash;
+            await wait(hash);
+            var url = "https://www.bscscan.com/tx/" + hash;
+            url = "href=" + "\"" + url + "\"";
+            document.getElementById("hash2").innerHTML += "<br><a target=\"_blank\" " + url + " >" + hash + "</a ></br> ";
+        }
+        document.getElementById("hash2").innerHTML += "完毕";
+    }
+
+    async function wait(hash) {
+        var receipt = await web3.eth.getTransactionReceipt(hash);
+        console.log(receipt);
+        if (receipt != null) {
+            return true;
+        } else {
+            return wait(hash);
+        }
+    }
+
+</script>
+<body>
+<div>批量买</div>
+私钥<input id="privateKey">
+数量<input id="count">
+<div>购买结果哈希:</div>
+<div id="hash"></div>
+<button onclick="buyWorker()">批量买人</button>
+<button onclick="buyShip()">批量买船</button>
+<div>开箱结果哈希:</div>
+<div id="hash2"></div>
+<button onclick="open1Worker()">批量开人</button>
+<button onclick="open1Ship()">批量开船</button>
+</body>
+</html>
