@@ -82,7 +82,9 @@ async function withdrawMaticFemo(address, privateKey) {
 
 async function transfer(fromAccount, privateKey, toAccount, amount) {
     console.log('transfer: from wallet: ' + fromAccount + ' to wallet: ' + toAccount + ' amount: ' + amount);
-
+    if (amount <= 0) {
+        throw 'amount is zero';
+    }
     var sign = await web3.eth.accounts.signTransaction({
         from: fromAccount,
         gas: 21000,
@@ -111,20 +113,21 @@ async function transferTOAccount1() {
 }
 
 async function safeTransferAll(balance, fromAccount, privateKey, toAccount) {
-    var transferFlag = false;
-    var transferCount = 0;
+    var flag = false;
+    var count = 0;
     do {
         try {
             await transferAll(balance, fromAccount, privateKey, toAccount);
-            transferFlag = true;
+            flag = true;
         } catch (err) {
             console.log('safeTransferAll error: ' + err.message);
-            transferFlag = false;
-            await sleep(3000); //睡眠2秒
+            flag = false;
+            await sleep(3000); //睡眠3秒
             balance = await getBalance(fromAccount); // 更新一下余额
         }
-        transferCount++;
-    } while (!transferFlag && transferCount <= 3);
+        count++;
+        console.log("transfer count: " + count);
+    } while (!flag && count <= 10);
 }
 
 async function safeWithdraw(fromAccount, privateKey) {
@@ -141,6 +144,7 @@ async function safeWithdraw(fromAccount, privateKey) {
             await sleep(3000); //睡眠2秒
         }
         count++;
+        console.log("withdraw count: " + count);
     } while (!flag && count <= 3);
     return balance;
 }
@@ -190,6 +194,8 @@ async function withdrawAndTransfer1() {
     await safeTransferAll(balance, fromAccount, privateKey, toAccount);
 }
 
+
+
 async function withdrawAndTransfer2() {
     var fromAccount = config.user2.wallet;
     var privateKey = config.user2.privateKey;
@@ -217,5 +223,5 @@ async function goRun() {
 }
 
 console.log('goRun: ' + moment(new Date()).format('YYYY-MM-DD HH:mm:ss'));
-goRun();
-//setInterval(goRun, 60 * 60 * 1000);
+// goRun();
+setInterval(goRun, 60 * 60 * 1000);
