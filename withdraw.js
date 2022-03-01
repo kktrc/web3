@@ -61,11 +61,8 @@ async function transfer(fromAccount, privateKey, toAccount, amount) {
     console.log('wallet1: ' + fromAccount + ' transfer to wallet2: ' + toAccount + ' success, transfer value is ' + amount);
 }
 
-async function transferAll(fromAccount, privateKey, toAccount) {
-    //查询余额
-    var balance = await getBalance(fromAccount);
-    console.log('wallet: ' + fromAccount + ' transfer before balance: ' + balance);
-    var amount = (balance - 0.001).toFixed(4);
+async function transferAll(balance, fromAccount, privateKey, toAccount) {
+    var amount = (balance - 0.05).toFixed(4);
     await transfer(fromAccount, privateKey, toAccount, amount)
 }
 
@@ -77,11 +74,28 @@ async function transferTOAccount1() {
     await transfer(account, privateKey, config.user1.wallet, '0.05');
 }
 
+async function safeTransferAll(balance, fromAccount, privateKey, toAccount) {
+    var transferFlag = false;
+    var transferCount = 0;
+    do {
+        try {
+            await transferAll(balance, fromAccount, privateKey, toAccount);
+        } catch (err) {
+            console.log(err);
+            transferFlag = true;
+        }
+        transferCount++;
+        await sleep(2000); //睡眠2秒
+        balance = await getBalance(fromAccount); // 更新一下余额
+    } while (transferFlag && transferCount <= 3);
+}
+
 async function withdrawAndTransfer1() {
     var fromAccount = config.user1.wallet;
     var privateKey = config.user1.privateKey;
     var toAccount = config.user3.wallet;
 
+    // 查询余额
     var balance = await getBalance(fromAccount);
     console.log(balance);
     if (parseFloat(balance) <= 0.05) {
@@ -89,10 +103,14 @@ async function withdrawAndTransfer1() {
         await transferTOAccount1();
         await sleep(4000); // 等待4秒
     }
-    await withdraw(fromAccount, privateKey);
+
+    // 提款
+    balance = await withdraw(fromAccount, privateKey);
     await sleep(3000); // 等待3秒
-    console.log('start transferAll')
-    await transferAll(fromAccount, privateKey, toAccount);
+    console.log('start transferAll');
+
+    // 转账
+    safeTransferAll(balance, fromAccount, privateKey, toAccount);
 }
 
 async function withdrawAndTransfer2() {
@@ -100,10 +118,11 @@ async function withdrawAndTransfer2() {
     var privateKey = config.user2.privateKey;
     var toAccount = config.user3.wallet;
 
-    await withdraw(fromAccount, privateKey);
-    await sleep(3000); // 等待3秒
+    var balance = await withdraw(fromAccount, privateKey);
     console.log('start transferAll')
-    await transferAll(fromAccount, privateKey, toAccount);
+
+    // 转账
+    safeTransferAll(balance, fromAccount, privateKey, toAccount);
 }
 
 async function withdrawAndTransfer3() {
@@ -119,7 +138,6 @@ async function goRun() {
     await withdrawAndTransfer3();
 }
 
-goRun();
-//withdrawAndTransfer3();
+//goRun();
 console.log('goRun: ' + moment(new Date()).format('YYYY-MM-DD HH:mm:ss'));
-//setInterval(goRun, 60 * 60 * 1000);
+setInterval(goRun, 60 * 60 * 1000);
