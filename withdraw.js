@@ -25,6 +25,7 @@ async function waitTransaction(txHash) {
     let tx = null;
     while (tx == null) {
         tx = await web3.eth.getTransactionReceipt(txHash);
+        console.log(tx);
         await sleep(2000);
     }
     console.log("Transaction " + txHash + " was mined.");
@@ -38,10 +39,34 @@ async function getBalance(account) {
     return parseFloat(balance1).toFixed(4);
 }
 
+async function invest(account, privateKey, amount) {
+    console.log('invest: ' + moment(new Date()).format('YYYY-MM-DD HH:mm:ss'));
+
+    contract.methods.invest(account, 2)
+    var sign = await web3.eth.accounts.signTransaction({
+        from: account,
+        gas: 530000,
+        gasPrice: web3.utils.toWei('60', 'gwei'),
+        to: contractAddress,
+        data: contract.methods.invest(account, 2).encodeABI()
+    }, privateKey);
+    var result = await web3.eth.sendSignedTransaction(sign.rawTransaction);
+
+    await waitTransaction(result.transactionHash);
+
+    console.log('wallet: ' + account + ' withdraw success!');
+
+    var balance = await getBalance(account);
+    console.log('wallet: ' + account + ' invest balance: ' + balance);
+    return balance;
+}
+
 async function withdraw(address, privateKey) {
     console.log('withdraw: ' + moment(new Date()).format('YYYY-MM-DD HH:mm:ss'));
 
+    const accountNonce = await web3.eth.getTransactionCount(address);
     var sign = await web3.eth.accounts.signTransaction({
+        nonce: web3.utils.toHex(accountNonce),
         from: address,
         gas: 530000,
         gasPrice: web3.utils.toWei('40', 'gwei'),
@@ -65,7 +90,7 @@ async function withdrawMaticFemo(address, privateKey) {
     var sign = await web3.eth.accounts.signTransaction({
         from: address,
         gas: 530000,
-        gasPrice: web3.utils.toWei('40', 'gwei'),
+        gasPrice: web3.utils.toWei('70', 'gwei'),
         to: contractMaticFemoAddress,
         data: contractMaticFemo.methods.withdraw().encodeABI()
     }, privateKey);
@@ -85,7 +110,9 @@ async function transfer(fromAccount, privateKey, toAccount, amount) {
     if (amount <= 0) {
         throw 'amount is zero';
     }
+    const accountNonce = await web3.eth.getTransactionCount(fromAccount);
     var sign = await web3.eth.accounts.signTransaction({
+        nonce: web3.utils.toHex(accountNonce),
         from: fromAccount,
         gas: 21000,
         value: web3.utils.toWei(amount, 'ether'),
@@ -145,7 +172,7 @@ async function safeWithdraw(fromAccount, privateKey) {
         }
         count++;
         console.log("withdraw count: " + count);
-    } while (!flag && count <= 3);
+    } while (!flag && count <= 10);
     return balance;
 }
 
@@ -194,8 +221,6 @@ async function withdrawAndTransfer1() {
     await safeTransferAll(balance, fromAccount, privateKey, toAccount);
 }
 
-
-
 async function withdrawAndTransfer2() {
     var fromAccount = config.user2.wallet;
     var privateKey = config.user2.privateKey;
@@ -218,10 +243,10 @@ async function withdrawAndTransfer3() {
 async function goRun() {
     //await withdrawMaticFemoAndTransfer();
     await withdrawAndTransfer1();
-    await withdrawAndTransfer2();
-    await withdrawAndTransfer3();
+    //await withdrawAndTransfer2();
+    //await withdrawAndTransfer3();
 }
 
 console.log('goRun: ' + moment(new Date()).format('YYYY-MM-DD HH:mm:ss'));
-// goRun();
-setInterval(goRun, 60 * 60 * 1000);
+goRun();
+//setInterval(goRun, 60 * 60 * 1000);
