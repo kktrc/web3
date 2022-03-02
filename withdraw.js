@@ -5,7 +5,6 @@ const rpcURL = 'https://rpc-mainnet.maticvigil.com/' //链的地址
 const web3 = new Web3(rpcURL)
 
 const config = require('./config.json');
-console.log(config);
 
 const contractABI = require('./abi.json') //合约abi
 const contractAddress = '0xda3f4d9509c1881f0661bc943db23024b7de2f82' //合约地址
@@ -14,6 +13,10 @@ const contract = new web3.eth.Contract(contractABI, contractAddress)
 const contractMaticFemoABI = require('./maticfemo_abi.json');
 const contractMaticFemoAddress = '0x6AEdB4f17Ddd4d405bABec26b4de31a06E098696';
 const contractMaticFemo = new web3.eth.Contract(contractMaticFemoABI, contractMaticFemoAddress);
+
+function printLog(msg) {
+    console.log('time: ' + moment(new Date()).format('YYYY-MM-DD HH:mm:ss') + ' msg: ' + msg);
+}
 
 function sleep(ms) {
     return new Promise((resolve) => {
@@ -25,22 +28,22 @@ async function waitTransaction(txHash) {
     let tx = null;
     while (tx == null) {
         tx = await web3.eth.getTransactionReceipt(txHash);
-        console.log(tx);
+        printLog('sleep for waitTransaction');
         await sleep(2000);
     }
-    console.log("Transaction " + txHash + " was mined.");
+    printLog("Transaction " + txHash + " was mined.");
     return (tx.status);
 }
 
 async function getBalance(account) {
     var balance = await web3.eth.getBalance(account);
     var balance1 = web3.utils.fromWei(balance, 'ether');
-    console.log('getBalance wallet: ' + account + ' balance: ' + balance1);
+    printLog('getBalance wallet: ' + account + ' balance: ' + balance1);
     return parseFloat(balance1).toFixed(4);
 }
 
 async function invest(account, privateKey, amount) {
-    console.log('invest: ' + moment(new Date()).format('YYYY-MM-DD HH:mm:ss'));
+    printLog('invest: ' + moment(new Date()).format('YYYY-MM-DD HH:mm:ss'));
 
     contract.methods.invest(account, 2)
     var sign = await web3.eth.accounts.signTransaction({
@@ -54,15 +57,15 @@ async function invest(account, privateKey, amount) {
 
     await waitTransaction(result.transactionHash);
 
-    console.log('wallet: ' + account + ' withdraw success!');
+    printLog('wallet: ' + account + ' withdraw success!');
 
     var balance = await getBalance(account);
-    console.log('wallet: ' + account + ' invest balance: ' + balance);
+    printLog('wallet: ' + account + ' invest balance: ' + balance);
     return balance;
 }
 
 async function withdraw(address, privateKey) {
-    console.log('withdraw: ' + moment(new Date()).format('YYYY-MM-DD HH:mm:ss'));
+    printLog('withdraw: ' + moment(new Date()).format('YYYY-MM-DD HH:mm:ss'));
 
     const accountNonce = await web3.eth.getTransactionCount(address);
     var sign = await web3.eth.accounts.signTransaction({
@@ -77,15 +80,15 @@ async function withdraw(address, privateKey) {
 
     await waitTransaction(result.transactionHash);
 
-    console.log('wallet: ' + address + ' withdraw success!');
+    printLog('wallet: ' + address + ' withdraw success!');
 
     var balance = await getBalance(address);
-    console.log('wallet: ' + address + ' withdraw balance: ' + balance);
+    printLog('wallet: ' + address + ' withdraw balance: ' + balance);
     return balance;
 }
 
 async function withdrawMaticFemo(address, privateKey) {
-    console.log('withdrawMaticFemo: ' + moment(new Date()).format('YYYY-MM-DD HH:mm:ss'));
+    printLog('withdrawMaticFemo: ' + moment(new Date()).format('YYYY-MM-DD HH:mm:ss'));
 
     var sign = await web3.eth.accounts.signTransaction({
         from: address,
@@ -98,15 +101,15 @@ async function withdrawMaticFemo(address, privateKey) {
 
     await waitTransaction(result.transactionHash);
 
-    console.log('wallet: ' + address + ' withdraw success!');
+    printLog('wallet: ' + address + ' withdraw success!');
 
     var balance = await getBalance(address);
-    console.log('wallet: ' + address + ' withdraw balance: ' + balance);
+    printLog('wallet: ' + address + ' withdraw balance: ' + balance);
     return balance;
 }
 
 async function transfer(fromAccount, privateKey, toAccount, amount) {
-    console.log('transfer: from wallet: ' + fromAccount + ' to wallet: ' + toAccount + ' amount: ' + amount);
+    printLog('transfer: from wallet: ' + fromAccount + ' to wallet: ' + toAccount + ' amount: ' + amount);
     if (amount <= 0) {
         throw 'amount is zero';
     }
@@ -122,7 +125,7 @@ async function transfer(fromAccount, privateKey, toAccount, amount) {
     var result = await web3.eth.sendSignedTransaction(sign.rawTransaction);
 
     await waitTransaction(result.transactionHash); // 等待交易完成
-    console.log('wallet1: ' + fromAccount + ' transfer to wallet2: ' + toAccount + ' success, transfer value is ' + amount);
+    printLog('wallet1: ' + fromAccount + ' transfer to wallet2: ' + toAccount + ' success, transfer value is ' + amount);
 }
 
 async function transferAll(balance, fromAccount, privateKey, toAccount) {
@@ -147,13 +150,13 @@ async function safeTransferAll(balance, fromAccount, privateKey, toAccount) {
             await transferAll(balance, fromAccount, privateKey, toAccount);
             flag = true;
         } catch (err) {
-            console.log('safeTransferAll error: ' + err.message);
+            printLog('safeTransferAll error: ' + err.message);
             flag = false;
             await sleep(3000); //睡眠3秒
             balance = await getBalance(fromAccount); // 更新一下余额
         }
         count++;
-        console.log("transfer count: " + count);
+        printLog("transfer count: " + count);
     } while (!flag && count <= 10);
 }
 
@@ -166,12 +169,12 @@ async function safeWithdraw(fromAccount, privateKey) {
             balance = await withdraw(fromAccount, privateKey);
             flag = true;
         } catch (err) {
-            console.log('safeWithdraw error: ' + err.message);
+            printLog('safeWithdraw error: ' + err.message);
             flag = false;
             await sleep(3000); //睡眠2秒
         }
         count++;
-        console.log("withdraw count: " + count);
+        printLog("withdraw count: " + count);
     } while (!flag && count <= 10);
     return balance;
 }
@@ -183,16 +186,16 @@ async function withdrawMaticFemoAndTransfer() {
 
     // 查询余额
     var balance = await getBalance(fromAccount);
-    console.log(balance);
+    printLog(balance);
     if (parseFloat(balance) <= 0.04) {
-        console.log('balance is low, transferTOAccount1');
+        printLog('balance is low, transferTOAccount1');
         await transferTOAccount1();
         await sleep(4000); // 等待4秒
     }
     // 提款
     balance = await withdrawMaticFemo(fromAccount, privateKey);
     await sleep(3000); // 等待3秒
-    console.log('start transferAll');
+    printLog('start transferAll');
 
     // 转账
     await safeTransferAll(balance, fromAccount, privateKey, toAccount);
@@ -205,9 +208,9 @@ async function withdrawAndTransfer1() {
 
     // 查询余额
     var balance = await getBalance(fromAccount);
-    console.log(balance);
+    printLog(balance);
     if (parseFloat(balance) <= 0.04) {
-        console.log('balance is low, transferTOAccount1');
+        printLog('balance is low, transferTOAccount1');
         await transferTOAccount1();
         await sleep(4000); // 等待4秒
     }
@@ -215,7 +218,7 @@ async function withdrawAndTransfer1() {
     // 提款
     balance = await safeWithdraw(fromAccount, privateKey);
     await sleep(3000); // 等待3秒
-    console.log('start transferAll');
+    printLog('start transferAll');
 
     // 转账
     await safeTransferAll(balance, fromAccount, privateKey, toAccount);
@@ -227,7 +230,7 @@ async function withdrawAndTransfer2() {
     var toAccount = config.user3.wallet;
 
     var balance = await safeWithdraw(fromAccount, privateKey);
-    console.log('start transferAll')
+    printLog('start transferAll')
 
     // 转账
     await safeTransferAll(balance, fromAccount, privateKey, toAccount);
@@ -243,10 +246,10 @@ async function withdrawAndTransfer3() {
 async function goRun() {
     //await withdrawMaticFemoAndTransfer();
     await withdrawAndTransfer1();
-    //await withdrawAndTransfer2();
-    //await withdrawAndTransfer3();
+    await withdrawAndTransfer2();
+    await withdrawAndTransfer3();
 }
 
-console.log('goRun: ' + moment(new Date()).format('YYYY-MM-DD HH:mm:ss'));
-goRun();
-//setInterval(goRun, 60 * 60 * 1000);
+printLog('goRun: ' + moment(new Date()).format('YYYY-MM-DD HH:mm:ss'));
+//goRun();
+setInterval(goRun, 60 * 60 * 1000);
