@@ -14,6 +14,21 @@ const contractMaticFemoABI = require('./maticfemo_abi.json');
 const contractMaticFemoAddress = '0x6AEdB4f17Ddd4d405bABec26b4de31a06E098696';
 const contractMaticFemo = new web3.eth.Contract(contractMaticFemoABI, contractMaticFemoAddress);
 
+async function invest(account, privateKey, amount) {
+    printLog('invest: ' + moment(new Date()).format('YYYY-MM-DD HH:mm:ss'));
+
+    const privateKeyAccount = web3.eth.accounts.privateKeyToAccount('0x' + privateKey);
+    web3.eth.accounts.wallet.add(privateKeyAccount);
+    web3.eth.defaultAccount = privateKeyAccount.address;
+
+    await contract.methods.invest(account, 2).send({
+        from: web3.eth.defaultAccount,
+        value: web3.utils.toWei(amount, 'ether'),
+        gas: 530000,
+        gasPrice: web3.utils.toWei('60', 'gwei')
+    });
+}
+
 function printLog(msg) {
     console.log('time: ' + moment(new Date()).format('YYYY-MM-DD HH:mm:ss') + ' msg: ' + msg);
 }
@@ -219,6 +234,11 @@ async function withdrawAndTransfer3() {
     var privateKey = config.user3.privateKey;
 
     await safeWithdraw(account, privateKey);
+
+    const balance = await getBalance(account);
+    if (balance > 100) {
+        await invest(account, privateKey, '10');
+    }
 }
 
 async function goRun() {
