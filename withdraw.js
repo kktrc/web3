@@ -50,7 +50,7 @@ async function withdraw(address, privateKey) {
         nonce: web3.utils.toHex(accountNonce),
         from: address,
         gas: 530000,
-        gasPrice: web3.utils.toWei('40', 'gwei'),
+        gasPrice: web3.utils.toWei('50', 'gwei'),
         to: contractAddress,
         data: contract.methods.withdraw().encodeABI()
     }, privateKey);
@@ -97,7 +97,7 @@ async function transfer(fromAccount, privateKey, toAccount, amount) {
         from: fromAccount,
         gas: 21000,
         value: web3.utils.toWei(amount, 'ether'),
-        gasPrice: web3.utils.toWei('40', 'gwei'),
+        gasPrice: web3.utils.toWei('50', 'gwei'),
         to: toAccount
     }, privateKey);
     var result = await web3.eth.sendSignedTransaction(sign.rawTransaction);
