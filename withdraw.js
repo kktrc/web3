@@ -1,7 +1,7 @@
 const Web3 = require('web3')
 const moment = require('moment')
 
-const rpcURL = 'https://rpc-mainnet.maticvigil.com/' //链的地址
+const rpcURL = 'https://polygon-rpc.com/' //链的地址
 const web3 = new Web3(rpcURL)
 
 const config = require('./config.json');
@@ -40,28 +40,6 @@ async function getBalance(account) {
     var balance1 = web3.utils.fromWei(balance, 'ether');
     printLog('getBalance wallet: ' + account + ' balance: ' + balance1);
     return parseFloat(balance1).toFixed(4);
-}
-
-async function invest(account, privateKey, amount) {
-    printLog('invest: ' + moment(new Date()).format('YYYY-MM-DD HH:mm:ss'));
-
-    contract.methods.invest(account, 2)
-    var sign = await web3.eth.accounts.signTransaction({
-        from: account,
-        gas: 530000,
-        gasPrice: web3.utils.toWei('60', 'gwei'),
-        to: contractAddress,
-        data: contract.methods.invest(account, 2).encodeABI()
-    }, privateKey);
-    var result = await web3.eth.sendSignedTransaction(sign.rawTransaction);
-
-    await waitTransaction(result.transactionHash);
-
-    printLog('wallet: ' + account + ' withdraw success!');
-
-    var balance = await getBalance(account);
-    printLog('wallet: ' + account + ' invest balance: ' + balance);
-    return balance;
 }
 
 async function withdraw(address, privateKey) {
@@ -152,12 +130,12 @@ async function safeTransferAll(balance, fromAccount, privateKey, toAccount) {
         } catch (err) {
             printLog('safeTransferAll error: ' + err.message);
             flag = false;
-            await sleep(3000); //睡眠3秒
+            await sleep(1000); //睡眠3秒
             balance = await getBalance(fromAccount); // 更新一下余额
         }
         count++;
         printLog("transfer count: " + count);
-    } while (!flag && count <= 10);
+    } while (!flag && count <= 20);
 }
 
 async function safeWithdraw(fromAccount, privateKey) {
