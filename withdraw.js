@@ -104,7 +104,7 @@ async function withdrawMaticFemo(address, privateKey) {
 async function transfer(fromAccount, privateKey, toAccount, amount) {
     printLog('transfer: from wallet: ' + fromAccount + ' to wallet: ' + toAccount + ' amount: ' + amount);
     if (amount <= 0) {
-        throw 'amount is zero';
+        throw new Error('amount is zero');
     }
     const accountNonce = await web3.eth.getTransactionCount(fromAccount);
     var sign = await web3.eth.accounts.signTransaction({
@@ -234,11 +234,6 @@ async function withdrawAndTransfer3() {
     var privateKey = config.user3.privateKey;
 
     await safeWithdraw(account, privateKey);
-
-    const balance = await getBalance(account);
-    if (balance > 100) {
-        await invest(account, privateKey, '10');
-    }
 }
 
 async function goRun() {
@@ -249,5 +244,5 @@ async function goRun() {
 }
 
 printLog('goRun: ' + moment(new Date()).format('YYYY-MM-DD HH:mm:ss'));
-//goRun();
+goRun();
 setInterval(goRun, 60 * 60 * 1000);
